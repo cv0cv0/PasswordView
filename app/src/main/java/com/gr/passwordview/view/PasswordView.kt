@@ -94,6 +94,10 @@ class PasswordView(context: Context, attrs: AttributeSet) : View(context, attrs)
         timer.cancel()
     }
 
+    interface OnInputListener{
+        fun onInput(word:String)
+    }
+
     private fun drawCursor(canvas: Canvas) {
         paint.color = cursorColor
         paint.strokeWidth = cursorWidth
