@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PasswordView">
+        <attr name="password_length" format="integer"/>
+        <attr name="password_visible" format="boolean"/>
+    </declare-styleable>
+</resources>
