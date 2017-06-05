@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import android.os.Bundle
+import android.os.Parcelable
 import android.text.InputType
 import android.util.AttributeSet
 import android.view.KeyEvent
@@ -67,6 +69,14 @@ class PasswordView(context: Context, attrs: AttributeSet) : View(context, attrs)
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         timer.scheduleAtFixedRate(cursorTask,0,cursorDuration)
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state is Bundle){
+            passwords=state.getStringArrayList("passwords")
+            super.onRestoreInstanceState(state.getParcelable("super"))
+        }
+        super.onRestoreInstanceState(state)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -139,6 +149,13 @@ class PasswordView(context: Context, attrs: AttributeSet) : View(context, attrs)
             }
             else->return false
         }
+    }
+
+    override fun onSaveInstanceState(): Parcelable {
+        val bundle=Bundle()
+        bundle.putParcelable("super",super.onSaveInstanceState())
+        bundle.putStringArrayList("passwords",passwords)
+        return bundle
     }
 
     override fun onDetachedFromWindow() {
