@@ -95,7 +95,6 @@ class PasswordView(context: Context, attrs: AttributeSet) : View(context, attrs)
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.action==MotionEvent.ACTION_DOWN){
-            requestFocus()
             inputManager.showSoftInput(this,InputMethodManager.SHOW_FORCED)
             return true
         }
