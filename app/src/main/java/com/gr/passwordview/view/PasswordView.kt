@@ -7,9 +7,14 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.text.InputType
 import android.util.AttributeSet
+import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
+import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import com.gr.passwordview.R
 import com.gr.passwordview.util.dp2px
 import com.gr.passwordview.util.sp2px
@@ -18,15 +23,16 @@ import java.util.*
 /**
  * Created by gr on 2017/5/22.
  */
-class PasswordView(context: Context, attrs: AttributeSet) : View(context, attrs) {
+class PasswordView(context: Context, attrs: AttributeSet) : View(context, attrs),View.OnKeyListener {
     val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     val height = dp2px(40f)
+    val inputManager=context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
     var passwordLength = 4
     var passwordVisible = false
 
     var lineWidth = dp2px(40f)
-    val lineHeight = dp2px(2f)
+    val lineHeight = dp2px(1.5f)
     var lineSpace = dp2px(15f)
     val lineColor = Color.parseColor("#212121")
 
@@ -53,6 +59,9 @@ class PasswordView(context: Context, attrs: AttributeSet) : View(context, attrs)
         passwordLength = array.getInteger(R.styleable.PasswordView_password_length, 4)
         passwordVisible = array.getBoolean(R.styleable.PasswordView_password_visible, false)
         array.recycle()
+
+        isFocusableInTouchMode = true
+        setOnKeyListener(this)
     }
 
     override fun onAttachedToWindow() {
@@ -84,18 +93,58 @@ class PasswordView(context: Context, attrs: AttributeSet) : View(context, attrs)
         drawCursor(canvas)
     }
 
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action==MotionEvent.ACTION_DOWN){
+            requestFocus()
+            inputManager.showSoftInput(this,InputMethodManager.SHOW_FORCED)
+            return true
+        }
+        return super.onTouchEvent(event)
+    }
+
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+        if (!hasWindowFocus){
+            inputManager.hideSoftInputFromWindow(windowToken,0)
+        }
+    }
+
     override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection {
         outAttrs.inputType=InputType.TYPE_CLASS_NUMBER
-        return super.onCreateInputConnection(outAttrs)
+        outAttrs.imeOptions=EditorInfo.IME_ACTION_DONE
+        return BaseInputConnection(this,false)
+    }
+
+    override fun onKey(v: View, keyCode: Int, event: KeyEvent): Boolean {
+        if (event.action!=KeyEvent.ACTION_DOWN) return false
+        val size=passwords.size
+        when(event.keyCode){
+            KeyEvent.KEYCODE_DEL->{
+                if (size==0) return true
+                passwords.removeAt(size-1)
+                postInvalidate()
+                return true
+            }
+            in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9->{
+                if (size==passwordLength) return true
+                passwords.add((keyCode-7).toString())
+                postInvalidate()
+                return true
+            }
+            KeyEvent.KEYCODE_ENTER->{
+                if (size!=passwordLength) return true
+                Toast.makeText(context,passwords.joinToString(""),Toast.LENGTH_SHORT).show()
+                passwords.clear()
+                postInvalidate()
+                return true
+            }
+            else->return false
+        }
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         timer.cancel()
-    }
-
-    interface OnInputListener{
-        fun onInput(word:String)
     }
 
     private fun drawCursor(canvas: Canvas) {
